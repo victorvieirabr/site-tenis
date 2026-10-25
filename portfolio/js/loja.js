@@ -11,9 +11,38 @@
   var SEM_FOTO = 'img/sem-foto.svg';
   var MAX_NOVIDADES = 8;
   var MAX_VEJA_TAMBEM = 8;
+  var MAX_BOLINHAS = 6; // bolinhas de cor num cartão da vitrine; as outras viram "+N"
   var CONVITE_DEPOIS_MS = 4000; // espera até o balão do WhatsApp aparecer
   var CONVITE_DURACAO_MS = 3000; // quanto tempo o balão fica na tela antes de sumir sozinho
   var CHAVE_CARRINHO = 'carrinho'; // onde o carrinho fica guardado no navegador do visitante
+
+  // Tom de cada nome de cor (sem acento), para pintar as bolinhas da vitrine.
+  // Nome com duas ou três cores ("Branco e verde", "Preto/Dourado") vira bolinha dividida.
+  // Nome que não está aqui ("Cinza-gelo" vira "cinza"; desconhecido de todo) usa a foto do tênis na bolinha.
+  var TONS = {
+    'branco': '#ffffff', 'off-white': '#f4efe4', 'gelo': '#eef1f4', 'creme': '#f3e9d2',
+    'bege': '#d8c3a0', 'areia': '#d9c7a7', 'nude': '#e3c3a8', 'caqui': '#b8a97a',
+    'preto': '#1d1f22', 'cinza': '#8b9097', 'cinza-claro': '#c7cbd1', 'cinza-escuro': '#4b5057',
+    'grafite': '#3f4349', 'chumbo': '#555a61', 'prata': '#c0c5cb', 'prateado': '#c0c5cb',
+    'dourado': '#d4a62a', 'ouro': '#d4a62a', 'bronze': '#a97142', 'cobre': '#b8733d',
+    'azul': '#1f5fd1', 'azul-claro': '#9cc6ea', 'azul-bebe': '#a9d1f0', 'celeste': '#8cc8ee',
+    'azul-celeste': '#8cc8ee', 'azul-marinho': '#1d2b4f', 'marinho': '#1d2b4f', 'azul-royal': '#2448c4',
+    'royal': '#2448c4', 'azul-escuro': '#1e3a8a', 'azul-petroleo': '#1f4e5f', 'petroleo': '#1f4e5f',
+    'turquesa': '#2ec4b6', 'azul-turquesa': '#2ec4b6', 'ciano': '#22b8cf',
+    'verde': '#1f9d55', 'verde-claro': '#7ed69a', 'verde-escuro': '#1e5631', 'verde-musgo': '#5b6b2f',
+    'musgo': '#5b6b2f', 'verde-militar': '#4b5320', 'oliva': '#708238', 'verde-oliva': '#708238',
+    'verde-agua': '#8fdcc2', 'menta': '#98e2c6', 'verde-limao': '#b6e51d', 'limao': '#b6e51d',
+    'verde-fluor': '#9cff2e', 'verde-neon': '#9cff2e',
+    'amarelo': '#f5c518', 'amarelo-fluor': '#e8ff3a', 'amarelo-neon': '#e8ff3a', 'mostarda': '#d4a017',
+    'laranja': '#f57c1f', 'laranja-fluor': '#ff6a1a', 'laranja-neon': '#ff6a1a', 'coral': '#ff6f5e',
+    'salmao': '#fa8a72', 'pessego': '#f7b58a', 'terracota': '#c0603b',
+    'vermelho': '#d62828', 'vinho': '#7b1e2b', 'bordo': '#7b1e2b', 'grena': '#6d1a2a',
+    'rosa': '#f48fb1', 'rosa-claro': '#f8c8d8', 'rosa-bebe': '#f8c8d8', 'rosa-choque': '#e6398a',
+    'pink': '#e6398a', 'rosa-fluor': '#ff4fa3', 'magenta': '#c2185b', 'fucsia': '#d63384',
+    'roxo': '#7b3fb3', 'lilas': '#b39ddb', 'violeta': '#8e44ad', 'lavanda': '#c5b3e6', 'uva': '#5b2a6e',
+    'marrom': '#7a4a2a', 'caramelo': '#b5713a', 'chocolate': '#4e2e1e', 'cafe': '#5a3a26', 'castanho': '#6b4226'
+  };
+  var COLORIDO = ['#d62828', '#f5c518', '#1f9d55', '#1f5fd1'];
 
   var CAT = window.CATALOGO;
   var loja = (CAT && CAT.loja) || {};
@@ -463,6 +492,67 @@
       a.categoria === b.categoria && a.subcategoria === b.subcategoria;
   }
 
+  // Junta as cores do mesmo modelo num grupo só, na posição da primeira que aparece na lista.
+  function agruparCores(itens) {
+    var grupos = [];
+    var i, g, achou;
+    for (i = 0; i < itens.length; i++) {
+      achou = false;
+      for (g = 0; g < grupos.length && !achou; g++) {
+        if (mesmoModelo(grupos[g][0], itens[i])) {
+          grupos[g].push(itens[i]);
+          achou = true;
+        }
+      }
+      if (!achou) grupos.push([itens[i]]);
+    }
+    return grupos;
+  }
+
+  function semAcento(s) {
+    return s.normalize ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : s;
+  }
+
+  // Devolve a lista de tons da cor (até 3) ou null se algum pedaço do nome for desconhecido.
+  function tonsDaCor(nome) {
+    var s = semAcento(texto(nome).toLowerCase());
+    var partes = s.split(/\s*[\/,+&]\s*|\s+e\s+|\s+com\s+/);
+    var tons = [];
+    var i, parte, tom;
+    for (i = 0; i < partes.length; i++) {
+      parte = partes[i].replace(/^\s+|\s+$/g, '').replace(/\s+/g, '-');
+      if (!parte) continue;
+      if (/^(multi-?)?colorid[oa]$|^multicor(es)?$/.test(parte)) {
+        tons = tons.concat(COLORIDO);
+        continue;
+      }
+      tom = TONS[parte] || TONS[parte.split('-')[0]];
+      if (!tom) return null;
+      if (tons.indexOf(tom) === -1) tons.push(tom);
+    }
+    return tons.length ? tons.slice(0, COLORIDO.length) : null;
+  }
+
+  function pintarBolinha(tinta, p) {
+    var tons = tonsDaCor(p.cor);
+    var paradas = [];
+    var i, passo;
+    if (!tons) {
+      tinta.className += ' bolinha-foto';
+      tinta.style.backgroundImage = 'url("' + imagensDe(p)[0].replace(/["\\]/g, '\\$&') + '")';
+      return;
+    }
+    if (tons.length === 1) {
+      tinta.style.background = tons[0];
+      return;
+    }
+    passo = 100 / tons.length;
+    for (i = 0; i < tons.length; i++) {
+      paradas.push(tons[i] + ' ' + (i * passo).toFixed(2) + '% ' + ((i + 1) * passo).toFixed(2) + '%');
+    }
+    tinta.style.background = 'linear-gradient(135deg, ' + paradas.join(', ') + ')';
+  }
+
   function imagensDe(p) {
     var imgs = lista(p.imagens);
     var saida = [];
@@ -544,32 +634,95 @@
     ]);
   }
 
-  function cartao(p) {
-    var semEstoque = esgotado(p);
-    return el('li', { classe: 'cartao' + (semEstoque ? ' cartao-esgotado' : '') }, [
-      el('a', { href: linkProduto(p.id), classe: 'cartao-link' }, [
-        el('div', { classe: 'cartao-foto' }, [
-          foto(imagensDe(p)[0], texto(p.nome)),
-          el('div', { classe: 'selos' }, [
-            emPromocao(p) ? el('span', { classe: 'selo selo-desconto', texto: '-' + desconto(p) + '%' }) : null,
-            semEstoque ? el('span', { classe: 'selo selo-esgotado', texto: 'Esgotado' }) : null,
-            soEncomenda(p) ? el('span', { classe: 'selo selo-encomenda', texto: 'Sob encomenda' }) : null
-          ])
-        ]),
-        el('div', { classe: 'cartao-info' }, [
-          texto(p.marca) ? el('span', { classe: 'cartao-marca', texto: p.marca }) : null,
-          el('h3', { classe: 'cartao-nome', texto: p.nome }),
-          texto(p.cor) ? el('span', { classe: 'cartao-cor', texto: p.cor }) : null,
-          blocoPreco(p, 'cartao-preco')
-        ])
-      ])
-    ]);
+  // Cartão da vitrine. "cores" = as cores do mesmo modelo nesta lista (com p), na ordem do catálogo.
+  // Com duas cores ou mais, ganha bolinhas: tocar numa troca foto, cor, preço e link do cartão.
+  // O cartão inteiro abre o produto pelo link do nome (que se estica por cima do cartão);
+  // as bolinhas ficam por cima desse link para poderem ser tocadas.
+  function cartao(p, cores) {
+    var li = el('li', { classe: 'cartao' });
+    var fotoBox = el('div', { classe: 'cartao-foto' });
+    var info = el('div', { classe: 'cartao-info' });
+    var bolinhas = null;
+    var botoes = [];
+    var visiveis, i;
+
+    function mostrar(atual) {
+      var semEstoque = esgotado(atual);
+      var filhos, k;
+      li.className = 'cartao' + (semEstoque ? ' cartao-esgotado' : '');
+      limpar(fotoBox);
+      fotoBox.appendChild(foto(imagensDe(atual)[0], texto(atual.nome) + (texto(atual.cor) ? ' ' + texto(atual.cor) : '')));
+      fotoBox.appendChild(el('div', { classe: 'selos' }, [
+        emPromocao(atual) ? el('span', { classe: 'selo selo-desconto', texto: '-' + desconto(atual) + '%' }) : null,
+        semEstoque ? el('span', { classe: 'selo selo-esgotado', texto: 'Esgotado' }) : null,
+        soEncomenda(atual) ? el('span', { classe: 'selo selo-encomenda', texto: 'Sob encomenda' }) : null
+      ]));
+      // Troca tudo do texto, menos as bolinhas (assim o botão tocado não perde o foco).
+      filhos = Array.prototype.slice.call(info.childNodes);
+      for (k = 0; k < filhos.length; k++) {
+        if (filhos[k] !== bolinhas) info.removeChild(filhos[k]);
+      }
+      filhos = [
+        texto(atual.marca) ? el('span', { classe: 'cartao-marca', texto: atual.marca }) : null,
+        el('h3', { classe: 'cartao-nome' }, [el('a', { href: linkProduto(atual.id), classe: 'cartao-link', texto: atual.nome })]),
+        texto(atual.cor) ? el('span', { classe: 'cartao-cor', texto: atual.cor }) : null
+      ];
+      for (k = 0; k < filhos.length; k++) {
+        if (filhos[k]) info.insertBefore(filhos[k], bolinhas);
+      }
+      info.appendChild(blocoPreco(atual, 'cartao-preco'));
+      for (k = 0; k < botoes.length; k++) {
+        botoes[k].b.setAttribute('aria-pressed', botoes[k].p === atual ? 'true' : 'false');
+      }
+    }
+
+    function botaoCor(v) {
+      var nomeCor = texto(v.cor) || 'Outra cor';
+      var tinta = el('span', { classe: 'bolinha-tinta' });
+      var b = el('button', { type: 'button', classe: 'bolinha', title: nomeCor, 'aria-label': nomeCor }, [tinta]);
+      var carregou = false;
+      // Mouse em cima ou dedo encostando: já busca a foto, para a troca ser na hora.
+      function preCarregar() {
+        if (carregou) return;
+        carregou = true;
+        new Image().src = imagensDe(v)[0];
+      }
+      pintarBolinha(tinta, v);
+      b.addEventListener('mouseenter', preCarregar);
+      b.addEventListener('focus', preCarregar);
+      b.addEventListener('touchstart', preCarregar, { passive: true });
+      b.addEventListener('click', function () { mostrar(v); });
+      botoes.push({ b: b, p: v });
+      return b;
+    }
+
+    if (cores && cores.length > 1) {
+      visiveis = cores.slice(0, MAX_BOLINHAS);
+      if (visiveis.indexOf(p) === -1) visiveis[visiveis.length - 1] = p;
+      bolinhas = el('div', { classe: 'bolinhas', role: 'group', 'aria-label': 'Cores disponíveis' });
+      for (i = 0; i < visiveis.length; i++) bolinhas.appendChild(botaoCor(visiveis[i]));
+      if (cores.length > visiveis.length) {
+        bolinhas.appendChild(el('span', { classe: 'bolinhas-mais', texto: '+' + (cores.length - visiveis.length) }));
+      }
+      info.appendChild(bolinhas);
+    }
+
+    li.appendChild(fotoBox);
+    li.appendChild(info);
+    mostrar(p);
+    return li;
   }
 
-  function grade(itens) {
+  // Grade de cartões. As cores do mesmo modelo viram um cartão só (com bolinhas),
+  // mostrando primeiro a cor que veio antes na lista. "maximo" limita o número de cartões.
+  function grade(itens, maximo) {
     var ul = el('ul', { classe: 'grade' });
+    var grupos = agruparCores(itens);
     var i;
-    for (i = 0; i < itens.length; i++) ul.appendChild(cartao(itens[i]));
+    if (maximo) grupos = grupos.slice(0, maximo);
+    for (i = 0; i < grupos.length; i++) {
+      ul.appendChild(cartao(grupos[i][0], grupos[i].slice().sort(function (a, b) { return a._ordem - b._ordem; })));
+    }
     return ul;
   }
 
@@ -901,12 +1054,12 @@
     destaques = ordenar(produtos.filter(function (p) { return p.destaque === true; }), 'novidades');
     tituloDestaques = 'Destaques';
     if (!destaques.length) {
-      destaques = ordenar(produtos, 'novidades').slice(0, MAX_NOVIDADES);
+      destaques = ordenar(produtos, 'novidades');
       tituloDestaques = 'Novidades';
     }
     conteudo.appendChild(secao('destaques', tituloDestaques, [
       destaques.length
-        ? grade(destaques)
+        ? grade(destaques, tituloDestaques === 'Novidades' ? MAX_NOVIDADES : 0)
         : caixaAviso(3, 'Em breve novidades por aqui', 'Estamos preparando a vitrine. Volte logo!')
     ]));
 
@@ -1095,7 +1248,10 @@
       });
       itens = ordenar(itens, selOrdem.value);
 
-      contagem.textContent = itens.length === 1 ? '1 produto' : itens.length + ' produtos';
+      // Conta cartões (cada modelo uma vez); se juntou cores, diz quantas são.
+      var cartoes = agruparCores(itens).length;
+      contagem.textContent = (cartoes === 1 ? '1 produto' : cartoes + ' produtos') +
+        (itens.length > cartoes ? ' em ' + itens.length + ' cores' : '');
       limpar(resultado);
       if (itens.length) {
         resultado.appendChild(grade(itens));
@@ -1457,9 +1613,9 @@
     // Veja também: outros produtos da mesma subcategoria (as outras cores já aparecem lá em cima)
     var parecidos = ordenar(produtos.filter(function (o) {
       return o !== p && !mesmoModelo(o, p) && o.categoria === p.categoria && o.subcategoria === p.subcategoria;
-    }), 'novidades').slice(0, MAX_VEJA_TAMBEM);
+    }), 'novidades');
     if (parecidos.length) {
-      conteudo.appendChild(secao('veja-tambem', 'Veja também', [grade(parecidos)]));
+      conteudo.appendChild(secao('veja-tambem', 'Veja também', [grade(parecidos, MAX_VEJA_TAMBEM)]));
     }
   }
 
