@@ -620,7 +620,7 @@
       if (!p || maximo === 0) {
         problemas++;
         lista.appendChild(el('li', { classe: 'carrinho-item carrinho-indisponivel' }, [
-          L.foto(p ? L.imagensDe(p)[0] : 'img/sem-foto.svg', p ? texto(p.nome) : 'Produto'),
+          L.fotoPequena(p ? L.imagensDe(p)[0] : 'img/sem-foto.svg', p ? texto(p.nome) : 'Produto'),
           el('div', null, [
             el('p', { classe: 'carrinho-nome', texto: p ? texto(p.nome) : 'Produto que saiu da loja' }),
             el('p', { classe: 'carrinho-detalhe', texto: 'Tamanho ' + item.tamanho + ': indisponível no momento. Remova para continuar.' })
@@ -643,7 +643,7 @@
       mais.disabled = itens[indice].quantidade >= maximo;
 
       lista.appendChild(el('li', { classe: 'carrinho-item' }, [
-        L.foto(L.imagensDe(p)[0], texto(p.nome)),
+        L.fotoPequena(L.imagensDe(p)[0], texto(p.nome)),
         el('div', null, [
           el('a', { href: L.linkProduto(p.id), classe: 'carrinho-nome', texto: texto(p.nome) }),
           el('p', { classe: 'carrinho-detalhe', texto: 'Tamanho ' + item.tamanho + (texto(p.cor) ? ' · ' + texto(p.cor) : '') + ' · ' + reais(preco) + ' cada' })

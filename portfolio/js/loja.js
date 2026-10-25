@@ -16,6 +16,14 @@
   var CONVITE_DURACAO_MS = 3000; // quanto tempo o balão fica na tela antes de sumir sozinho
   var CHAVE_CARRINHO = 'carrinho'; // onde o carrinho fica guardado no navegador do visitante
 
+  // O que aparece de leve ao rolar a página (ver revelarAoRolar).
+  var ALVOS_REVELAR = [
+    '.heroi-texto > *', '.heroi-palco', '.faixa-produtos',
+    '.secao-titulo', '.pagina-titulo', '.atalho-grupo', '.cartao', '.aviso',
+    '.galeria', '.produto-info', '.descricao'
+  ].join(', ');
+  var observadorRevelar = null;
+
   // Tom de cada nome de cor (sem acento), para pintar as bolinhas da vitrine.
   // Nome com duas ou três cores ("Branco e verde", "Preto/Dourado") vira bolinha dividida.
   // Nome que não está aqui ("Cinza-gelo" vira "cinza"; desconhecido de todo) usa a foto do tênis na bolinha.
@@ -80,6 +88,7 @@
     montarTopo(categoriaAtual);
     montarRodape();
     montarWhatsFlutuante(produtoAtual);
+    ligarEfeitos();
     if (pagina === 'texto') return; // páginas de texto (como a de privacidade) já vêm prontas no HTML
     limpar(conteudo);
 
@@ -97,6 +106,104 @@
     else if (pagina === 'produto') paginaProduto(produtoAtual);
     else if (pagina === 'inicio') paginaInicio();
     // carrinho, finalizar, pedido, conta e dono são montadas por js/pedidos.js
+    revelarAoRolar(conteudo);
+  }
+
+  /* ================= aparecer ao rolar ================= */
+
+  // Partes da página (ALVOS_REVELAR, no começo do arquivo) que surgem de leve, subindo um pouco,
+  // quando entram na tela, uma depois da outra. Sem JavaScript, ou com "reduzir movimento"
+  // ligado no aparelho, tudo aparece normal, parado.
+  function revelarAoRolar(raiz) {
+    var alvos, i;
+    if (!raiz || !('IntersectionObserver' in window)) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!observadorRevelar) {
+      observadorRevelar = new IntersectionObserver(function (entradas) {
+        var n = 0;
+        entradas.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          surgir(e.target, Math.min(n, 8) * 70);
+          n++;
+        });
+      }, { rootMargin: '0px 0px -8% 0px' });
+    }
+    alvos = raiz.querySelectorAll(ALVOS_REVELAR);
+    for (i = 0; i < alvos.length; i++) {
+      if (alvos[i].classList.contains('surgir')) continue;
+      alvos[i].classList.add('revelar');
+      observadorRevelar.observe(alvos[i]);
+    }
+  }
+
+  /* ================= efeitos: cabeçalho, toque nos botões, luz nos cartões ================= */
+
+  // "Reduzir movimento" ligado no aparelho: nada se mexe sozinho.
+  function podeAnimar() {
+    return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function ligarEfeitos() {
+    // Cabeçalho vira "vidro" (translúcido e desfocado) depois que a página rola um pouco.
+    var rolado = false;
+    var agendado = false;
+    function olharRolagem() {
+      var agora = (window.pageYOffset || document.documentElement.scrollTop) > 8;
+      agendado = false;
+      if (agora !== rolado) {
+        rolado = agora;
+        topo.classList.toggle('topo-rolado', agora);
+      }
+    }
+    window.addEventListener('scroll', function () {
+      if (!agendado) { agendado = true; window.requestAnimationFrame(olharRolagem); }
+    }, { passive: true });
+    olharRolagem();
+
+    if (!podeAnimar()) return;
+
+    // Toque ou clique num botão: uma onda sai do ponto tocado.
+    document.addEventListener('pointerdown', function (e) {
+      var alvo = e.target && e.target.closest ? e.target.closest('.botao, .tamanho, .aba, .chip, .botao-favorito, .faixa-item, .miniatura') : null;
+      var r, tam, onda;
+      if (!alvo || alvo.disabled) return;
+      r = alvo.getBoundingClientRect();
+      tam = Math.max(r.width, r.height) * 2.2;
+      onda = el('span', { classe: 'onda', 'aria-hidden': 'true' });
+      onda.style.width = tam + 'px';
+      onda.style.height = tam + 'px';
+      onda.style.left = (e.clientX - r.left - tam / 2) + 'px';
+      onda.style.top = (e.clientY - r.top - tam / 2) + 'px';
+      alvo.classList.add('com-onda');
+      alvo.appendChild(onda);
+      window.setTimeout(function () { if (onda.parentNode) onda.parentNode.removeChild(onda); }, 700);
+    });
+
+    // Cartões: uma luz suave acompanha o mouse (só com mouse; no celular não tem como).
+    if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      document.addEventListener('pointermove', function (e) {
+        var c = e.target && e.target.closest ? e.target.closest('.cartao') : null;
+        var r;
+        if (!c) return;
+        r = c.getBoundingClientRect();
+        c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      }, { passive: true });
+    }
+  }
+
+  function surgir(alvo, atrasoMs) {
+    observadorRevelar.unobserve(alvo);
+    alvo.style.animationDelay = atrasoMs + 'ms';
+    alvo.classList.remove('revelar');
+    alvo.classList.add('surgir');
+    // Terminou: volta ao normal (o cartão volta a subir de leve ao passar o mouse).
+    alvo.addEventListener('animationend', function fim(ev) {
+      if (ev.target !== alvo) return;
+      alvo.removeEventListener('animationend', fim);
+      alvo.classList.remove('surgir');
+      alvo.style.animationDelay = '';
+    });
   }
 
   /* ================= vendas pelo site: o que está ligado ================= */
@@ -539,7 +646,7 @@
     var i, passo;
     if (!tons) {
       tinta.className += ' bolinha-foto';
-      tinta.style.backgroundImage = 'url("' + imagensDe(p)[0].replace(/["\\]/g, '\\$&') + '")';
+      tinta.style.backgroundImage = 'url("' + miniatura(imagensDe(p)[0]).replace(/["\\]/g, '\\$&') + '")';
       return;
     }
     if (tons.length === 1) {
@@ -621,6 +728,29 @@
     return img;
   }
 
+  // Foto pequena (img/produtos/mini/<mesmo nome>, feita por ferramentas/gerar-miniaturas.ps1)
+  // para cartões, fotinhas de cor e miniaturas da galeria: a página fica bem mais leve no celular.
+  // Só JPG e PNG têm versão pequena (WEBP não dá para diminuir nesta máquina).
+  function miniatura(src) {
+    var i = src.lastIndexOf('/');
+    if (!/^img\/produtos\/[^\/]+\.(jpe?g|png)$/i.test(src)) return src;
+    return src.slice(0, i + 1) + 'mini/' + src.slice(i + 1);
+  }
+
+  // Se a pequena faltar, usa a grande; se a grande faltar, a imagem de "sem foto".
+  function fotoPequena(src, alt, classe) {
+    var mini = miniatura(src);
+    var img = foto(mini, alt, classe);
+    if (mini !== src) {
+      img.onerror = function () {
+        var atual = img.getAttribute('src');
+        if (atual === mini) img.setAttribute('src', src);
+        else if (atual !== SEM_FOTO) img.setAttribute('src', SEM_FOTO);
+      };
+    }
+    return img;
+  }
+
   function blocoPreco(p, classe) {
     if (emPromocao(p)) {
       return el('p', { classe: 'preco ' + classe }, [
@@ -644,14 +774,18 @@
     var info = el('div', { classe: 'cartao-info' });
     var bolinhas = null;
     var botoes = [];
+    var jaMostrou = false;
     var visiveis, i;
 
     function mostrar(atual) {
       var semEstoque = esgotado(atual);
-      var filhos, k;
+      var filhos, k, img;
       li.className = 'cartao' + (semEstoque ? ' cartao-esgotado' : '');
       limpar(fotoBox);
-      fotoBox.appendChild(foto(imagensDe(atual)[0], texto(atual.nome) + (texto(atual.cor) ? ' ' + texto(atual.cor) : '')));
+      img = fotoPequena(imagensDe(atual)[0], texto(atual.nome) + (texto(atual.cor) ? ' ' + texto(atual.cor) : ''));
+      if (jaMostrou && podeAnimar()) img.classList.add('foto-entra'); // troca de cor: a foto nova entra com movimento
+      jaMostrou = true;
+      fotoBox.appendChild(img);
       fotoBox.appendChild(el('div', { classe: 'selos' }, [
         emPromocao(atual) ? el('span', { classe: 'selo selo-desconto', texto: '-' + desconto(atual) + '%' }) : null,
         semEstoque ? el('span', { classe: 'selo selo-esgotado', texto: 'Esgotado' }) : null,
@@ -685,7 +819,7 @@
       function preCarregar() {
         if (carregou) return;
         carregou = true;
-        new Image().src = imagensDe(v)[0];
+        new Image().src = miniatura(imagensDe(v)[0]);
       }
       pintarBolinha(tinta, v);
       b.addEventListener('mouseenter', preCarregar);
@@ -820,19 +954,10 @@
   /* ================= modo claro / escuro ================= */
 
   // O tema já é aplicado no <head> de cada página, antes de ela aparecer (assim não pisca).
-  // Aqui fica só o botão de trocar. A escolha do visitante fica salva no navegador dele.
+  // Sem escolha salva, abre no escuro. Aqui fica só o botão de trocar; a escolha fica salva no navegador.
 
   function temaAtual() {
     return document.documentElement.getAttribute('data-tema') === 'escuro' ? 'escuro' : 'claro';
-  }
-
-  function temaSalvo() {
-    try {
-      var t = window.localStorage.getItem('tema');
-      return (t === 'claro' || t === 'escuro') ? t : '';
-    } catch (e) {
-      return '';
-    }
   }
 
   function icone(tipo) {
@@ -865,9 +990,9 @@
     return svg;
   }
 
+  // A loja abre sempre no escuro (identidade dela); o claro fica para quem escolher no botão.
   function botaoTema() {
     var b = el('button', { type: 'button', classe: 'tema-botao' });
-    var sistema = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
     function atualizar() {
       var escuro = temaAtual() === 'escuro';
@@ -878,23 +1003,12 @@
       b.setAttribute('title', rotulo);
     }
 
-    function aoMudarSistema(e) {
-      if (temaSalvo()) return; // o visitante já escolheu: respeita a escolha dele
-      document.documentElement.setAttribute('data-tema', e.matches ? 'escuro' : 'claro');
-      atualizar();
-    }
-
     b.addEventListener('click', function () {
       var novo = temaAtual() === 'escuro' ? 'claro' : 'escuro';
       document.documentElement.setAttribute('data-tema', novo);
       try { window.localStorage.setItem('tema', novo); } catch (e) { /* navegador sem armazenamento: troca só nesta página */ }
       atualizar();
     });
-
-    if (sistema) {
-      if (sistema.addEventListener) sistema.addEventListener('change', aoMudarSistema);
-      else if (sistema.addListener) sistema.addListener(aoMudarSistema);
-    }
 
     atualizar();
     return b;
@@ -1013,6 +1127,106 @@
 
   /* ================= index.html ================= */
 
+  // Banner da página inicial: chamada, botões e o produto em destaque flutuando sobre um "palco" de luz.
+  // Com mouse, o produto acompanha o movimento de leve.
+  function montarHeroi(resumo, estrela, cats) {
+    var palco = null;
+    var foto1, nomeEstrela;
+    if (estrela) {
+      nomeEstrela = texto(estrela.nome) + (texto(estrela.cor) ? ' ' + texto(estrela.cor) : '');
+      foto1 = el('img', { src: imagensDe(estrela)[0], alt: nomeEstrela, classe: 'heroi-foto', decoding: 'async', fetchpriority: 'high' });
+      palco = el('a', { href: linkProduto(estrela.id), classe: 'heroi-palco', 'aria-label': 'Ver ' + nomeEstrela }, [
+        el('span', { classe: 'heroi-anel', 'aria-hidden': 'true' }),
+        el('span', { classe: 'heroi-luz', 'aria-hidden': 'true' }),
+        el('span', { classe: 'heroi-sombra', 'aria-hidden': 'true' }),
+        foto1,
+        el('span', { classe: 'heroi-etiqueta', 'aria-hidden': 'true' }, [
+          el('span', { texto: texto(estrela.nome) }),
+          el('strong', { texto: dinheiro(precoFinal(estrela)) })
+        ])
+      ]);
+      foto1.onerror = function () { palco.hidden = true; };
+    }
+
+    var secaoHeroi = el('section', { classe: 'heroi' }, [
+      el('div', { classe: 'heroi-fundo', 'aria-hidden': 'true' }),
+      el('div', { classe: 'limite heroi-grade' }, [
+        el('div', { classe: 'heroi-texto' }, [
+          el('p', { classe: 'heroi-selo', texto: nomeLoja }),
+          resumo
+            ? el('h1', { classe: 'heroi-titulo' }, [resumo + ' ', el('span', { classe: 'heroi-brilho', texto: 'para o seu jogo.' })])
+            : el('h1', { classe: 'heroi-titulo', texto: nomeLoja }),
+          el('p', { classe: 'heroi-frase', texto: 'Escolha o modelo, a cor e o tamanho.' }),
+          el('div', { classe: 'heroi-acoes' }, [
+            el('a', { href: '#destaques', classe: 'botao', texto: 'Ver produtos' }),
+            cats.length ? el('a', { href: linkCategoria(cats[0].id), classe: 'botao botao-fantasma', texto: 'Ver ' + texto(cats[0].nome) }) : null
+          ])
+        ]),
+        palco
+      ])
+    ]);
+
+    if (palco && podeAnimar() && window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      var px = 0, py = 0, agendado = false;
+      var aplicar = function () {
+        agendado = false;
+        palco.style.setProperty('--px', px.toFixed(3));
+        palco.style.setProperty('--py', py.toFixed(3));
+      };
+      secaoHeroi.addEventListener('pointermove', function (e) {
+        var r = secaoHeroi.getBoundingClientRect();
+        px = (e.clientX - r.left) / r.width - 0.5;
+        py = (e.clientY - r.top) / r.height - 0.5;
+        if (!agendado) { agendado = true; window.requestAnimationFrame(aplicar); }
+      });
+      secaoHeroi.addEventListener('pointerleave', function () { px = 0; py = 0; aplicar(); });
+    }
+    return secaoHeroi;
+  }
+
+  // Faixa com os produtos passando sem parar (um por modelo). São duas cópias seguidas da lista,
+  // para a volta não ter emenda. É só enfeite (os mesmos produtos estão logo abaixo), então fica
+  // escondida dos leitores de tela e fora da navegação pelo teclado.
+  function montarFaixa(itens) {
+    var modelos = agruparCores(itens).map(function (g) { return g[0]; })
+      .filter(function (p) { return imagensDe(p)[0] !== SEM_FOTO; });
+    // Intercala as categorias (um tênis, uma camisa, um tênis...), para a faixa ficar variada.
+    var porCategoria = {};
+    var ordemCats = [];
+    var unicos = [];
+    var base, trilho, k, sobrou;
+    modelos.forEach(function (p) {
+      if (!porCategoria[p.categoria]) { porCategoria[p.categoria] = []; ordemCats.push(p.categoria); }
+      porCategoria[p.categoria].push(p);
+    });
+    do {
+      sobrou = false;
+      for (k = 0; k < ordemCats.length; k++) {
+        if (porCategoria[ordemCats[k]].length) { unicos.push(porCategoria[ordemCats[k]].shift()); sobrou = true; }
+      }
+    } while (sobrou);
+    if (unicos.length < 3) return null;
+    base = unicos.slice();
+    while (base.length < 10) base = base.concat(unicos);
+
+    function copiaDaLista() {
+      var ul = el('ul', { classe: 'faixa-lista' });
+      base.forEach(function (p) {
+        ul.appendChild(el('li', null, [
+          el('a', { href: linkProduto(p.id), classe: 'faixa-item', tabindex: '-1' }, [
+            el('span', { classe: 'faixa-foto' }, [fotoPequena(imagensDe(p)[0], '')]),
+            el('span', { classe: 'faixa-nome', texto: texto(p.nome) })
+          ])
+        ]));
+      });
+      return ul;
+    }
+
+    trilho = el('div', { classe: 'faixa-trilho' }, [copiaDaLista(), copiaDaLista()]);
+    trilho.style.setProperty('--duracao', (base.length * 4) + 's');
+    return el('section', { classe: 'faixa-produtos', 'aria-hidden': 'true' }, [trilho]);
+  }
+
   function paginaInicio() {
     var cats = categoriasNoMenu();
     var resumo = juntarNomes(cats);
@@ -1021,16 +1235,18 @@
     document.title = nomeLoja + (resumo ? ' | ' + resumo : '');
     definirDescricao(resumo ? nomeLoja + ': ' + resumo + '.' : nomeLoja);
 
-    // Boas-vindas
-    conteudo.appendChild(el('section', { classe: 'boas-vindas' }, [
-      el('div', { classe: 'limite' }, [
-        el('h1', { texto: nomeLoja }),
-        resumo ? el('p', { texto: resumo + ' para o seu jogo.' }) : null,
-        el('a', { href: '#destaques', classe: 'botao botao-claro', texto: 'Ver produtos' })
-      ])
-    ]));
+    // Banner com o produto em destaque flutuando, e a faixa com os produtos passando
+    var vitrine = ordenar(produtos.filter(function (p) { return p.destaque === true; }), 'novidades');
+    if (!vitrine.length) vitrine = ordenar(produtos, 'novidades');
+    var estrela = null;
+    for (i = 0; i < vitrine.length && !estrela; i++) {
+      if (imagensDe(vitrine[i])[0] !== SEM_FOTO) estrela = vitrine[i];
+    }
+    conteudo.appendChild(montarHeroi(resumo, estrela, cats));
+    var faixa = montarFaixa(ordenar(produtos, 'novidades'));
+    if (faixa) conteudo.appendChild(faixa);
 
-    // Atalhos para as subcategorias
+    // Atalhos para as categorias: um cartão por categoria, com a foto de um produto dela
     if (cats.length) {
       var grupos = el('div', { classe: 'atalhos' });
       for (i = 0; i < cats.length; i++) {
@@ -1042,9 +1258,12 @@
             el('a', { href: linkCategoria(c.id, subs[j].id), classe: 'chip', texto: subs[j].nome })
           ]));
         }
+        var cid = c.id;
+        var rep = ordenar(produtos.filter(function (p) { return p.categoria === cid && imagensDe(p)[0] !== SEM_FOTO; }), 'novidades')[0];
         grupos.appendChild(el('div', { classe: 'atalho-grupo' }, [
           el('h3', { classe: 'atalho-titulo' }, [el('a', { href: linkCategoria(c.id), texto: c.nome })]),
-          c.dividida ? chips : null
+          c.dividida ? chips : null,
+          rep ? el('span', { classe: 'atalho-disco', 'aria-hidden': 'true' }, [fotoPequena(imagensDe(rep)[0], '')]) : null
         ]));
       }
       conteudo.appendChild(secao('atalhos', 'Compre por categoria', [grupos]));
@@ -1255,6 +1474,7 @@
       limpar(resultado);
       if (itens.length) {
         resultado.appendChild(grade(itens));
+        revelarAoRolar(resultado);
       } else {
         var limparAqui = el('button', { type: 'button', classe: 'botao', texto: 'Limpar filtros' });
         limparAqui.addEventListener('click', limparFiltros);
@@ -1313,7 +1533,17 @@
 
     // Galeria
     var principal = foto(imgs[0], nome, 'galeria-principal');
-    var galeria = el('div', { classe: 'galeria' }, [el('div', { classe: 'galeria-moldura' }, [principal])]);
+    var moldura = el('div', { classe: 'galeria-moldura' }, [principal]);
+    var galeria = el('div', { classe: 'galeria' }, [moldura]);
+    // Com mouse: passar por cima dá zoom na foto, no ponto em que o mouse está.
+    if (podeAnimar() && window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      moldura.classList.add('com-zoom');
+      moldura.addEventListener('pointermove', function (e) {
+        var r = moldura.getBoundingClientRect();
+        principal.style.transformOrigin = ((e.clientX - r.left) / r.width * 100).toFixed(1) + '% ' +
+          ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%';
+      });
+    }
     if (imgs.length > 1) {
       var miniaturas = el('ul', { classe: 'galeria-miniaturas' });
       var botoesFoto = [];
@@ -1330,10 +1560,15 @@
         classe: 'miniatura' + (indice === 0 ? ' miniatura-ativa' : ''),
         'aria-label': 'Ver foto ' + (indice + 1),
         'aria-pressed': indice === 0 ? 'true' : 'false'
-      }, [foto(src, nome)]);
+      }, [fotoPequena(src, nome)]);
       b.addEventListener('click', function () {
         var k;
         principal.setAttribute('src', src);
+        if (podeAnimar()) { // a foto nova entra com movimento
+          principal.classList.remove('foto-entra');
+          void principal.offsetWidth;
+          principal.classList.add('foto-entra');
+        }
         for (k = 0; k < botoesFoto.length; k++) {
           botoesFoto[k].classList.remove('miniatura-ativa');
           botoesFoto[k].setAttribute('aria-pressed', 'false');
@@ -1352,7 +1587,7 @@
       var listaCores = el('ul', { classe: 'cores-lista' });
       for (i = 0; i < variantes.length; i++) {
         var v = variantes[i];
-        var miolo = [foto(imagensDe(v)[0], nome + ' ' + texto(v.cor)), el('span', { classe: 'cor-nome', texto: texto(v.cor) || 'Outra cor' })];
+        var miolo = [fotoPequena(imagensDe(v)[0], nome + ' ' + texto(v.cor)), el('span', { classe: 'cor-nome', texto: texto(v.cor) || 'Outra cor' })];
         listaCores.appendChild(el('li', null, [
           v === p
             ? el('span', { classe: 'cor-opcao cor-atual', 'aria-current': 'true' }, miolo)
@@ -1645,6 +1880,7 @@
     estoqueDe: estoqueDe,
     imagensDe: imagensDe,
     foto: foto,
+    fotoPequena: fotoPequena,
     grade: grade,
     caixaAviso: caixaAviso,
     linkProduto: linkProduto,

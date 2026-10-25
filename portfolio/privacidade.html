@@ -6,13 +6,13 @@
   <title>Aviso de privacidade</title>
   <meta name="description" id="meta-descricao" content="Como a loja usa e protege os dados de quem cria conta e faz pedidos pelo site.">
   <script>
-    // Tema claro/escuro: a escolha salva do visitante ou, sem escolha, o tema do sistema.
+    // Tema claro/escuro: a escolha salva do visitante ou, sem escolha, o escuro (a cara da loja).
     // Fica aqui no <head> para a página já abrir no tema certo, sem piscar.
     (function () {
       var t = '';
       try { t = localStorage.getItem('tema') || ''; } catch (e) {}
       if (t !== 'claro' && t !== 'escuro') {
-        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'escuro' : 'claro';
+        t = 'escuro';
       }
       document.documentElement.setAttribute('data-tema', t);
     })();
