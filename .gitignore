@@ -1,0 +1,7 @@
+# Só a demonstração para o portfólio (pasta portfolio/, loja fictícia) vai para o GitHub.
+# As outras pastas (oficial, teste, backups, ferramentas, firebase, .claude) ficam só neste computador.
+/*
+!/.gitignore
+!/README.md
+!/.github/
+!/portfolio/

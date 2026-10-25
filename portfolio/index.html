@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Site Tenis | Loja de demonstração</title>
+  <meta name="description" id="meta-descricao" content="Projeto de portfólio: loja virtual de tênis de futebol, com vitrine, filtros, cores e encomenda pelo WhatsApp. Loja fictícia.">
+  <script>
+    // Tema claro/escuro: a escolha salva do visitante ou, sem escolha, o tema do sistema.
+    // Fica aqui no <head> para a página já abrir no tema certo, sem piscar.
+    (function () {
+      var t = '';
+      try { t = localStorage.getItem('tema') || ''; } catch (e) {}
+      if (t !== 'claro' && t !== 'escuro') {
+        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'escuro' : 'claro';
+      }
+      document.documentElement.setAttribute('data-tema', t);
+    })();
+  </script>
+  <link rel="icon" href="img/icone-32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="img/icone.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icone-180.png">
+  <!-- Prévia do link no WhatsApp e nas redes sociais. A imagem precisa do endereço completo do site publicado. -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Site Tenis">
+  <meta property="og:title" content="Site Tenis | Loja de demonstração">
+  <meta property="og:description" content="Projeto de portfólio: loja virtual de tênis de futebol, com vitrine, filtros, cores e encomenda pelo WhatsApp. Loja fictícia.">
+  <meta property="og:image" content="https://victorvieirabr.github.io/site-tenis/img/compartilhar.jpg">
+  <meta property="og:image:width" content="1000">
+  <meta property="og:image:height" content="667">
+  <meta property="og:image:alt" content="Ilustração de um tênis de futsal fictício">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body data-pagina="inicio">
+  <!-- Página genérica: o conteúdo é montado por js/loja.js a partir de dados/catalogo.js. -->
+  <header class="topo" id="topo"></header>
+  <main class="conteudo" id="conteudo">
+    <noscript><p class="aviso">Ative o JavaScript do navegador para ver os produtos da loja.</p></noscript>
+  </main>
+  <footer class="rodape" id="rodape"></footer>
+
+  <script src="js/ambiente.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="dados/catalogo.js"></script>
+  <script src="js/loja.js"></script>
+  <script src="js/pedidos.js"></script>
+</body>
+</html>

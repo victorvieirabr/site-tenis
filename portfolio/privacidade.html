@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aviso de privacidade</title>
+  <meta name="description" id="meta-descricao" content="Como a loja usa e protege os dados de quem cria conta e faz pedidos pelo site.">
+  <script>
+    // Tema claro/escuro: a escolha salva do visitante ou, sem escolha, o tema do sistema.
+    // Fica aqui no <head> para a página já abrir no tema certo, sem piscar.
+    (function () {
+      var t = '';
+      try { t = localStorage.getItem('tema') || ''; } catch (e) {}
+      if (t !== 'claro' && t !== 'escuro') {
+        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'escuro' : 'claro';
+      }
+      document.documentElement.setAttribute('data-tema', t);
+    })();
+  </script>
+  <link rel="icon" href="img/icone-32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="img/icone.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icone-180.png">
+  <!-- Prévia do link no WhatsApp e nas redes sociais. A imagem precisa do endereço completo do site publicado. -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Site Tenis">
+  <meta property="og:title" content="Site Tenis | Loja de demonstração">
+  <meta property="og:description" content="Projeto de portfólio: loja virtual de tênis de futebol, com vitrine, filtros, cores e encomenda pelo WhatsApp. Loja fictícia.">
+  <meta property="og:image" content="https://victorvieirabr.github.io/site-tenis/img/compartilhar.jpg">
+  <meta property="og:image:width" content="1000">
+  <meta property="og:image:height" content="667">
+  <meta property="og:image:alt" content="Ilustração de um tênis de futsal fictício">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body data-pagina="texto">
+  <!-- Página de texto: o conteúdo fica aqui mesmo. js/pedidos.js só preenche o nome e o WhatsApp da loja. -->
+  <header class="topo" id="topo"></header>
+  <main class="conteudo" id="conteudo">
+    <article class="secao secao-topo texto-legal">
+      <h1 class="pagina-titulo">Aviso de privacidade</h1>
+      <p class="carrinho-detalhe">Atualizado em 24 de outubro de 2026.</p>
+
+      <p>Este aviso explica, em palavras simples, quais dados a <span data-loja="nome">loja</span> guarda quando você cria uma conta ou faz um pedido pelo site, para que eles servem e quais são os seus direitos, de acordo com a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018).</p>
+
+      <h2>Quem cuida dos seus dados</h2>
+      <p>A <span data-loja="nome">loja</span> é a responsável pelos dados. Para falar com a gente sobre seus dados, use o <span data-loja="whatsapp">WhatsApp da loja</span>.</p>
+
+      <h2>Quais dados guardamos</h2>
+      <ul>
+        <li><strong>Conta:</strong> nome e e-mail. Se você entra com o Google, recebemos do Google o seu nome, e-mail e foto de perfil. Se você cria conta com e-mail, sua senha fica com o serviço de login e a loja nunca tem acesso a ela.</li>
+        <li><strong>Pedidos:</strong> nome, telefone, endereço de entrega, produtos, tamanhos, valores e a situação do pedido.</li>
+        <li><strong>Favoritos e dados salvos:</strong> os produtos que você favorita e, se você escolher, os dados de entrega para a próxima compra.</li>
+      </ul>
+      <p>Não pedimos CPF, número de cartão nem dados bancários. O pagamento é feito por Pix direto no app do seu banco.</p>
+
+      <h2>Para que usamos</h2>
+      <ul>
+        <li>Criar e manter sua conta e seus favoritos.</li>
+        <li>Receber, separar e entregar seus pedidos, e falar com você sobre eles (por WhatsApp ou e-mail).</li>
+        <li>Cumprir obrigações legais, como guardar o registro das vendas.</li>
+      </ul>
+      <p>Não vendemos seus dados, não usamos para propaganda de terceiros e não colocamos ferramentas de rastreamento no site.</p>
+
+      <h2>Com quem os dados ficam</h2>
+      <p>A conta e os pedidos ficam guardados no Firebase, um serviço do Google que a loja usa para o login e o banco de dados. Os servidores do Google podem ficar fora do Brasil, com as proteções exigidas pela LGPD. Ninguém mais recebe seus dados, a não ser quando a lei obrigar.</p>
+
+      <h2>Por quanto tempo</h2>
+      <p>Os dados da conta e os favoritos ficam guardados até você excluir a conta. Os pedidos ficam guardados pelo tempo que a lei exige para registros de vendas, mesmo depois de a conta ser excluída.</p>
+
+      <h2>Seus direitos</h2>
+      <p>Você pode, a qualquer momento: ver os dados que temos sobre você, corrigir o que estiver errado e pedir para apagar. Em <a href="conta.html">Minha conta</a> há o botão <strong>Excluir minha conta</strong>, que apaga a conta, os favoritos e os dados de entrega salvos. Para os outros pedidos, fale com a gente pelo <span data-loja="whatsapp">WhatsApp da loja</span>.</p>
+
+      <h2>O que fica no seu navegador</h2>
+      <p>O site guarda no seu próprio navegador: a escolha de modo claro ou escuro, os itens do carrinho e, se você entrar na conta, a sessão de login. Isso não é enviado para propaganda e você pode apagar limpando os dados do navegador.</p>
+    </article>
+  </main>
+  <footer class="rodape" id="rodape"></footer>
+
+  <script src="js/ambiente.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="dados/catalogo.js"></script>
+  <script src="js/loja.js"></script>
+  <script src="js/pedidos.js"></script>
+</body>
+</html>
