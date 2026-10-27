@@ -17,6 +17,17 @@ Projeto de portfólio: uma loja virtual de tênis de futebol, feita do zero. **A
 
 O código também traz contas de cliente (Google ou e-mail), favoritos, carrinho, pagamento por Pix e área do dono com Firebase. Essa parte fica desligada na demonstração.
 
+## Cadastro de produtos (área do dono)
+
+A página `cadastro.html` (no site publicado: `/cadastro.html`) é onde o dono cadastra, muda, tira do site e exclui produtos, com fotos, pelo computador ou pelo celular. Não precisa mexer em código.
+
+- Cada "Salvar" grava o catálogo e as fotos direto no GitHub, e o site é publicado sozinho em 1 ou 2 minutos. A tela avisa quando já está no ar.
+- O login é uma chave de acesso do GitHub que só pode mexer nos arquivos deste repositório. A própria tela tem o passo a passo e um link que abre a criação da chave já preenchida.
+- As fotos são diminuídas no navegador antes de enviar (grande com até 1000 px e miniatura com até 600 px, em JPG).
+- "Cadastrar outra cor deste modelo" copia um produto já cadastrado, para só trocar a cor, as fotos e o estoque.
+- O catálogo continua sendo o arquivo `portfolio/dados/catalogo.js`, gravado no mesmo formato de sempre. Toda mudança fica no histórico do GitHub e pode ser desfeita.
+- Para usar com outro repositório (outra cópia do site), mude `portfolio/js/cadastro-config.js`.
+
 ## Como é feito
 
 - HTML, CSS e JavaScript puros, sem frameworks e sem etapa de build

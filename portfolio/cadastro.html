@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Esta página guarda a chave de acesso do dono: só roda scripts da própria loja e só conversa com o GitHub. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Cadastro de produtos</title>
+  <script src="js/tema.js"></script>
+  <link rel="icon" href="img/icone-32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="img/icone.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icone-180.png">
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/cadastro.css">
+</head>
+<body data-pagina="cadastro">
+  <!-- Área do dono: criar, editar e tirar produtos do site. Montado por js/cadastro.js. -->
+  <header class="topo" id="topo"></header>
+  <main class="conteudo" id="conteudo">
+    <noscript><p class="aviso">Ative o JavaScript do navegador para usar o cadastro.</p></noscript>
+  </main>
+
+  <script src="js/cadastro-config.js"></script>
+  <script src="js/cadastro.js"></script>
+</body>
+</html>
