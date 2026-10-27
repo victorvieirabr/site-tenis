@@ -14,7 +14,7 @@ window.CATALOGO = {
       "regioes": []
     },
     "encomenda": {
-      "prazo": "15 a 20 dias"
+      "prazo": "20 a 30 dias"
     }
   },
   "categorias": [
